@@ -141,11 +141,13 @@ class GWritePrinter:
 
             f.write(f'\n; {len(self.commands)} total lines of GCODE generated')
 
-    def getPort(self):
+    def sendCodeToPrinter(self, baudrate: int = 115200):
         ports = serial.tools.list_ports.comports()
-        return [port.device for port in ports]
+        if not ports:
+            print('No serial ports found.')
+            return
 
-    def sendCodeToPrinter(self, port: str, baudrate: int = 115200):
+        port = ports[0].device
         try:
             with serial.Serial(port, baudrate, timeout=2) as ser:
                 for command in self.commands:

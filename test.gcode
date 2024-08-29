@@ -12,4 +12,4 @@ G1 Z100 F1000 ; Move z axis
 ; This is a test file.
 
 
-; 9 total lines of GCODE generated
+; 6 total lines of GCODE generated
