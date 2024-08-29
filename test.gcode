@@ -6,3 +6,9 @@ G28 ; Home all axis
 M104 S200 ; Set extruder temp
 M140 S60 ; Set heatbed temp
 G1 E100 F1000 ; Extrude filament
+G1 Z100 F1000 ; Move z axis
+
+; This is a test file.
+
+
+; 8 total lines of GCODE

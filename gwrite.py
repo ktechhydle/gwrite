@@ -130,7 +130,12 @@ class GWritePrinter:
     def addCustomCommand(self, command: str):
         self.commands.append(command)
 
+    def addComment(self, comment: str):
+        self.commands.append(f'\n; {comment}\n')
+
     def generate(self, filename: str):
         with open(filename, 'w') as f:
             for c in self.commands:
                 f.write(f'{c}\n')
+
+            f.write(f'\n; {len(self.commands)} total lines of GCODE generated')
