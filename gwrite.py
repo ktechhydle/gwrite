@@ -130,6 +130,14 @@ class GWritePrinter:
     def extrude(self, amount: GPos):
         self.commands.append(self.extruder.extrude(amount.pos(), amount.speed()))
 
+    def cooldown(self):
+        self.heatExtruderToTemp(0)
+        self.heatBedToTemp(0)
+        self.turnFanOn()
+
+    def disableSteppers(self):
+        self.commands.append('M18 ; Disable steppers')
+
     def turnFanOn(self):
         self.commands.append('M106 ; Set fan to full speed')
 
@@ -148,6 +156,15 @@ class GWritePrinter:
         else:
             GWriteError.displayError(GWriteError, 'target temp on PID autotune cannot be negative.')
 
+    def displayMessage(self, message: str, playTone=False):
+        self.commands.append(f'M117 {message} ; Display a message on screen')
+
+        if playTone:
+            self.playTone()
+
+    def playTone(self, duration: int = 220, frequency: int = 440):
+        self.commands.append(f'M300 S{frequency} P{duration}')
+
     def addCustomCommand(self, command: str):
         self.commands.append(command)
 
@@ -161,8 +178,9 @@ class GWritePrinter:
 
             f.write(f'\n; {len(self.commands)} total lines of GCODE generated')
 
-    def loadCodeFromFile(self, filename: str):
-        self.commands.clear()
+    def loadCodeFromFile(self, filename: str, clearExisting: bool = True):
+        if clearExisting:
+            self.commands.clear()
         with open(filename, 'r') as f:
             for line in f.readlines():
                 self.commands.append(line)
@@ -170,18 +188,28 @@ class GWritePrinter:
     def sendCodeToPrinter(self, baudrate: int = 115200):
         ports = serial.tools.list_ports.comports()
         if not ports:
-            GWriteError.displayError(GWriteError, f'no usb ports found')
+            GWriteError.displayError(GWriteError, 'No USB ports found')
             return
 
         port = ports[0].device
         try:
             with serial.Serial(port, baudrate, timeout=2) as ser:
-                for command in self.commands:
-                    ser.write(f'{command}\n'.encode())
+                # Buffer commands into a single write
+                commands_str = '\n'.join(self.commands) + '\n'
+                ser.write(commands_str.encode())
+
+                # Optionally read responses if needed
+                for _ in self.commands:
                     response = ser.readline().decode().strip()
-                    print(f'Printer response: {response}')
+                    print(f'GWritePrinter response: {response}')
         except serial.SerialException as e:
-            GWriteError.displayError(GWriteError, f'failed to connect to printer \n{e}')
+            GWriteError.displayError(GWriteError, f'Failed to connect to printer \n{e}')
+
+    def storeSettings(self):
+        self.commands.append('M500 ; Store settings to EEPROM')
+
+    def stopPrinter(self):
+        self.commands.append('M999 ; WARNING: stop printer')
 
     def clearCode(self):
         self.commands.clear()
