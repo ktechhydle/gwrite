@@ -78,6 +78,8 @@ class GWritePrinter:
     XAxis = 'x'
     YAxis = 'y'
     ZAxis = 'z'
+    Heatbed = 'heatbed'
+    Hotend = 'hotend'
 
     def __init__(self):
         self.extruder = GWriteExtruder()
@@ -87,9 +89,9 @@ class GWritePrinter:
         self.commands.append('; Copyright (C) GWrite 2024\n\n')
 
     def homeAxis(self, axis):
-        if axis == 'x':
+        if axis == self.XAxis:
             self.commands.append(f'G28 X ; Home x axis')
-        elif axis == 'y':
+        elif axis == self.YAxis:
             self.commands.append(f'G28 Y ; Home y axis')
         else:
             self.commands.append(f'G28 Z ; Home z axis')
@@ -128,6 +130,24 @@ class GWritePrinter:
     def extrude(self, amount: GPos):
         self.commands.append(self.extruder.extrude(amount.pos(), amount.speed()))
 
+    def turnFanOn(self):
+        self.commands.append('M106 ; Set fan to full speed')
+
+    def turnFanOff(self):
+        self.commands.append('M107 ; Turn fan off')
+
+    def setFanTo(self, speed: int):
+        self.commands.append(f'M106 S{speed if speed >= 1 else 0} ; Set fan to speed')
+
+    def autotunePID(self, pid, targetTemp: int):
+        if targetTemp >= 50:
+            if pid == self.Hotend:
+                self.commands.append(f'M303 E0 S{targetTemp}; Tune hotend PID')
+            else:
+                self.commands.append(f'M303 E-1 S{targetTemp}; Tune heatbed PID')
+        else:
+            GWriteError.displayError(GWriteError, 'target temp on PID autotune cannot be negative.')
+
     def addCustomCommand(self, command: str):
         self.commands.append(command)
 
@@ -141,10 +161,16 @@ class GWritePrinter:
 
             f.write(f'\n; {len(self.commands)} total lines of GCODE generated')
 
+    def loadCodeFromFile(self, filename: str):
+        self.commands.clear()
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                self.commands.append(line)
+
     def sendCodeToPrinter(self, baudrate: int = 115200):
         ports = serial.tools.list_ports.comports()
         if not ports:
-            print('No serial ports found.')
+            GWriteError.displayError(GWriteError, f'no usb ports found')
             return
 
         port = ports[0].device
@@ -156,3 +182,6 @@ class GWritePrinter:
                     print(f'Printer response: {response}')
         except serial.SerialException as e:
             GWriteError.displayError(GWriteError, f'failed to connect to printer \n{e}')
+
+    def clearCode(self):
+        self.commands.clear()
