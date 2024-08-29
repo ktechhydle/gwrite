@@ -1,4 +1,5 @@
-
+import serial
+import serial.tools.list_ports
 
 class GPos:
     def __init__(self, pos: float, speed: float):
@@ -139,3 +140,17 @@ class GWritePrinter:
                 f.write(f'{c}\n')
 
             f.write(f'\n; {len(self.commands)} total lines of GCODE generated')
+
+    def getPort(self):
+        ports = serial.tools.list_ports.comports()
+        return [port.device for port in ports]
+
+    def sendCodeToPrinter(self, port: str, baudrate: int = 115200):
+        try:
+            with serial.Serial(port, baudrate, timeout=2) as ser:
+                for command in self.commands:
+                    ser.write(f'{command}\n'.encode())
+                    response = ser.readline().decode().strip()
+                    print(f'Printer response: {response}')
+        except serial.SerialException as e:
+            GWriteError.displayError(GWriteError, f'failed to connect to printer \n{e}')
