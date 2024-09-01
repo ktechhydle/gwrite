@@ -101,6 +101,7 @@ class GWritePrinter:
 
     def levelBed(self):
         self.commands.append('G29 ; Mesh bed leveling')
+        self.commands.append('M420 S1 ; Ensure mesh bed leveling is enabled')
 
     def setAbsoluteMode(self):
         self.commands.append('G90 ; Set coordinates interpreted as absolute')
@@ -116,6 +117,28 @@ class GWritePrinter:
 
     def setZ(self, pos: GPos):
         self.commands.append(f'G1 Z{pos.pos()} F{pos.speed()} ; Move z axis')
+
+    def move(self, axis, pos: GPos):
+        if axis == self.XAxis:
+            self.commands.append(f'G1 X{pos.pos()} F{pos.speed()} ; Move x axis')
+
+        elif axis == self.YAxis:
+            self.commands.append(f'G1 Y{pos.pos()} F{pos.speed()} ; Move y axis')
+
+        else:
+            self.commands.append(f'G1 Z{pos.pos()} F{pos.speed()} ; Move z axis')
+
+    def createPurgeLine(self, filament: GWriteFilament, levelBed: bool = False):
+        self.homePrinter()
+        if levelBed:
+            self.levelBed()
+
+        self.prepareFor(filament)
+        self.commands.append('; Create a purge line\n'
+                             'G1 X10 Z0.2 F1000\n'
+                             'G1 X70 E8 F900\n'
+                             'G1 X140 E10 F700\n'
+                             'G92 E0\n')
 
     def setFlowPercent(self, percent: int):
         self.commands.append(f'M221 S{percent} ; Set flow percent')
