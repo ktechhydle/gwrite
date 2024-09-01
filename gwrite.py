@@ -117,6 +117,13 @@ class GWritePrinter:
     def setZ(self, pos: GPos):
         self.commands.append(f'G1 Z{pos.pos()} F{pos.speed()} ; Move z axis')
 
+    def setFlowPercent(self, percent: int):
+        self.commands.append(f'M221 S{percent} ; Set flow percent')
+
+    def setInputShaperFrequencies(self, xFrequency: int, yFrequency: int):
+        self.commands.append(f'M593 X F{xFrequency} ; Set x frequency for input shaper')
+        self.commands.append(f'M593 Y F{yFrequency} ; Set y frequency for input shaper')
+
     def heatExtruderToTemp(self, temp: int):
         self.commands.append(self.extruder.setTemp(temp))
 
@@ -135,8 +142,11 @@ class GWritePrinter:
         self.heatBedToTemp(0)
         self.turnFanOn()
 
-    def disableSteppers(self):
+    def disableMotors(self):
         self.commands.append('M18 ; Disable steppers')
+
+    def disableInputShaper(self):
+        self.commands.append('M593 F0 ; Disable input shaping')
 
     def turnFanOn(self):
         self.commands.append('M106 ; Set fan to full speed')
@@ -163,7 +173,7 @@ class GWritePrinter:
             self.playTone()
 
     def playTone(self, duration: int = 220, frequency: int = 440):
-        self.commands.append(f'M300 S{frequency} P{duration}')
+        self.commands.append(f'M300 S{frequency} P{duration} ; Play a tone using the speaker')
 
     def addCustomCommand(self, command: str):
         self.commands.append(command)
@@ -188,7 +198,7 @@ class GWritePrinter:
     def sendCodeToPrinter(self, baudrate: int = 115200):
         ports = serial.tools.list_ports.comports()
         if not ports:
-            GWriteError.displayError(GWriteError, 'No USB ports found')
+            GWriteError.displayError(GWriteError, 'no USB ports found')
             return
 
         port = ports[0].device
@@ -203,13 +213,14 @@ class GWritePrinter:
                     response = ser.readline().decode().strip()
                     print(f'GWritePrinter response: {response}')
         except serial.SerialException as e:
-            GWriteError.displayError(GWriteError, f'Failed to connect to printer \n{e}')
+            GWriteError.displayError(GWriteError, f'failed to connect to printer \n{e}')
 
     def storeSettings(self):
         self.commands.append('M500 ; Store settings to EEPROM')
 
-    def stopPrinter(self):
-        self.commands.append('M999 ; WARNING: stop printer')
+    def end(self):
+        self.commands.append('M77 ; Stop print job timer')
+        self.disableSteppers()
 
     def clearCode(self):
         self.commands.clear()
