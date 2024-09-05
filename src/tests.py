@@ -1,4 +1,4 @@
-from gwrite import GWritePrinter, GWriteFilament, GPos
+from src import GWritePrinter, GWriteFilament, GPos
 
 filament = GWriteFilament(200, 60)  # PLA
 
