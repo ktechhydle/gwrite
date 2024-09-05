@@ -52,7 +52,8 @@
 | `clearCode()`                                                             | Clear all commands from the GCODE list                                                                          | (Cleared)                                           |
 
 ### Example Code
-```
+```python
+
 from gwrite import GWritePrinter, GWriteFilament, GPos
 
 filament = GWriteFilament(200, 60)  # PLA
