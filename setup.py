@@ -8,5 +8,5 @@ setup(
     author_email='ktechindustries2019@gmail.com',
     packages=['gwrite'],  #same as name
     install_requires=['wheel', 'bar', 'greek'], #external packages as dependencies
-    scripts=['gwrite', 'tests']
+    scripts=['gwrite/gwrite', 'gwrite/tests']
 )

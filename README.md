@@ -9,6 +9,7 @@
 - And more!
 
 ### Install
+Install with `pip` using `pip install gwrite`
 
 ### Types
 - `GWritePrinter()`: the base class for all functions and methods
@@ -52,6 +53,7 @@
 | `clearCode()`                                                             | Clear all commands from the GCODE list                                                                          | (Cleared)                                           |
 
 ### Example Code
+
 ```python
 
 from gwrite import GWritePrinter, GWriteFilament, GPos
